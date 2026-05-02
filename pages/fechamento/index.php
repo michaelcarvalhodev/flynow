@@ -144,8 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Calcula comissões
             $resultado = calcularFechamento($fechamentoId);
             if ($resultado['success']) {
-                header('Location: resumo.php?id=' . $fechamentoId);
+                echo '<script>window.location.href = "resumo.php?id=' . $fechamentoId . '";</script>';
                 exit;
+            }
             } else {
                 $errors[] = $resultado['error'];
             }
