@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'aprovar' && canApprovePayments()) {
         $stmt = $pdo->prepare("
-            UPDATE fechamentos SET status = 'aprovado', data_aprovacao = NOW(), aprovado_por = ?
+            UPDATE fechamentos SET status = 'aprovado', data_aprovacao = CURRENT_TIMESTAMP, aprovado_por = ?
             WHERE id = ?
         ");
         $stmt->execute([$_SESSION['user_id'], $fechamentoId]);
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fechamento['status'] = 'aprovado';
     } elseif ($action === 'pagar' && canApprovePayments()) {
         $stmt = $pdo->prepare("
-            UPDATE fechamentos SET status = 'pago', data_pagamento = CURDATE()
+            UPDATE fechamentos SET status = 'pago', data_pagamento = CURRENT_DATE
             WHERE id = ?
         ");
         $stmt->execute([$fechamentoId]);
