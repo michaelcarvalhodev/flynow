@@ -3,47 +3,40 @@
  * FLYNOW - Central de Relatórios
  */
 
-$pageTitle = 'Relatórios';
-require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
 $pdo = getDB();
 
-// Busca fechamentos para export
-$fechamentos = $pdo->query("
-    SELECT f.*, 
-           (SELECT COUNT(*) FROM comissoes WHERE fechamento_id = f.id) as total_colaboradores
-    FROM fechamentos f
-    WHERE f.status IN ('calculado', 'aprovado', 'pago')
-    ORDER BY f.ano DESC, f.mes DESC
-")->fetchAll();
-
-// Processa exportação
+// ========================================
+// PROCESSA EXPORTAÇÃO ANTES DE QUALQUER HTML
+// ========================================
 if (isset($_GET['export'])) {
     $fechamentoId = intval($_GET['fechamento_id'] ?? 0);
     $format = $_GET['format'] ?? 'csv';
 
-    if ($fechamentoId > 0) {
+    if ($fechamentoId > 0 && $format === 'csv') {
         // Busca dados
         $stmt = $pdo->prepare("SELECT * FROM fechamentos WHERE id = ?");
         $stmt->execute([$fechamentoId]);
         $fechamento = $stmt->fetch();
 
-        $stmt = $pdo->prepare("
-            SELECT cm.*, c.nome, c.cpf, c.salario_base, cg.nome as cargo_nome
-            FROM comissoes cm
-            JOIN colaboradores c ON cm.colaborador_id = c.id
-            JOIN cargos cg ON c.cargo_id = cg.id
-            WHERE cm.fechamento_id = ?
-            ORDER BY c.nome
-        ");
-        $stmt->execute([$fechamentoId]);
-        $comissoes = $stmt->fetchAll();
+        if ($fechamento) {
+            $stmt = $pdo->prepare("
+                SELECT cm.*, c.nome, c.cpf, c.salario_base, cg.nome as cargo_nome
+                FROM comissoes cm
+                JOIN colaboradores c ON cm.colaborador_id = c.id
+                JOIN cargos cg ON c.cargo_id = cg.id
+                WHERE cm.fechamento_id = ?
+                ORDER BY c.nome
+            ");
+            $stmt->execute([$fechamentoId]);
+            $comissoes = $stmt->fetchAll();
 
-        if ($format === 'csv') {
-            // Exporta CSV
+            // HEADERS E DOWNLOAD
             header('Content-Type: text/csv; charset=utf-8');
             header('Content-Disposition: attachment; filename="folha_' . getMesNome($fechamento['mes']) . '_' . $fechamento['ano'] . '.csv"');
+            header('Pragma: no-cache');
+            header('Expires: 0');
 
             $output = fopen('php://output', 'w');
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM UTF-8
@@ -60,7 +53,7 @@ if (isset($_GET['export'])) {
                     number_format($cm['percentual_aplicado'], 2, ',', '.') . '%',
                     number_format($cm['valor_comissao'], 2, ',', '.'),
                     number_format($cm['bonus'], 2, ',', '.'),
-                    number_format($cm['deducoes'], 2, ',', '.'),
+                    number_format($cm['deducoes'] ?? 0, 2, ',', '.'),
                     number_format($cm['valor_liquido'], 2, ',', '.')
                 ], ';');
             }
@@ -80,10 +73,25 @@ if (isset($_GET['export'])) {
             ], ';');
 
             fclose($output);
-            exit;
+            exit; // CRITICAL: Para execução aqui
         }
     }
 }
+
+// ========================================
+// AGORA SIM CARREGA O HTML
+// ========================================
+$pageTitle = 'Relatórios';
+require_once __DIR__ . '/../../includes/header.php';
+
+// Busca fechamentos para export
+$fechamentos = $pdo->query("
+    SELECT f.*,
+           (SELECT COUNT(*) FROM comissoes WHERE fechamento_id = f.id) as total_colaboradores
+    FROM fechamentos f
+    WHERE f.status IN ('calculado', 'aprovado', 'pago')
+    ORDER BY f.ano DESC, f.mes DESC
+")->fetchAll();
 ?>
 
 <div class="page-header">
