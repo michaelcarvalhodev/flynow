@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($resultado['success']) {
                 echo '<script>window.location.href = "resumo.php?id=' . $fechamentoId . '";</script>';
                 exit;
-            }
+
             } else {
                 $errors[] = $resultado['error'];
             }
