@@ -20,9 +20,8 @@ PHP 8.1 | PostgreSQL | Docker | Render
 ## Processo
 
 1. **Desenvolvimento:** XAMPP + MySQL local
-2. **Migração:** MySQL → PostgreSQL (adaptações de sintaxe e tipos)
-3. **Correções:** State management, headers, field mapping
-4. **Deploy:** Docker + Supabase + Render
+2. **Migração:** MySQL → PostgreSQL (adaptações de sintaxe e tipos para as ferramentas usadas)
+3. **Deploy:** Docker + Supabase + Render
 
 ## Instalação
 
