@@ -22,11 +22,11 @@ if (!$fechamento) {
 
 // Busca pagamentos
 $stmt = $pdo->prepare("
-    SELECT p.*, c.nome, cg.nome as cargo_nome, cg.setor
-    FROM pagamentos p
-    JOIN colaboradores c ON p.colaborador_id = c.id
+    SELECT cm.*, c.nome, c.salario_base, cg.nome as cargo_nome, cg.setor
+    FROM comissoes cm
+    JOIN colaboradores c ON cm.colaborador_id = c.id
     JOIN cargos cg ON c.cargo_id = cg.id
-    WHERE p.fechamento_id = ?
+    WHERE cm.fechamento_id = ?
     ORDER BY cg.setor, c.nome
 ");
 $stmt->execute([$fechamentoId]);
@@ -92,12 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $totalPagar = $salario + $comissao + $bonus;
 
                 $stmt = $pdo->prepare("
-                    UPDATE pagamentos
-                    SET salario_base = ?, lucro_base_comissao = ?, percentual_comissao = ?,
-                        valor_comissao = ?, valor_bonus = ?, total_pagar = ?
+                    UPDATE comissoes
+                    SET valor_comissao = ?, percentual_aplicado = ?,
+                        bonus = ?, valor_liquido = ?
                     WHERE id = ? AND fechamento_id = ?
                 ");
-                $stmt->execute([$salario, $baseComissao, $percentual, $comissao, $bonus, $totalPagar, $pagamentoId, $fechamentoId]);
+                $stmt->execute([$comissao, $percentual, $bonus, $totalPagar, $pagamentoId, $fechamentoId]);
 
                 $totalSalarios += $salario;
                 $totalComissoes += $comissao;
@@ -140,11 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Recarrega os pagamentos
             $stmt = $pdo->prepare("
-                SELECT p.*, c.nome, cg.nome as cargo_nome, cg.setor
-                FROM pagamentos p
-                JOIN colaboradores c ON p.colaborador_id = c.id
+                SELECT cm.*, c.nome, c.salario_base, cg.nome as cargo_nome, cg.setor
+                FROM comissoes cm
+                JOIN colaboradores c ON cm.colaborador_id = c.id
                 JOIN cargos cg ON c.cargo_id = cg.id
-                WHERE p.fechamento_id = ?
+                WHERE cm.fechamento_id = ?
                 ORDER BY cg.setor, c.nome
             ");
             $stmt->execute([$fechamentoId]);
