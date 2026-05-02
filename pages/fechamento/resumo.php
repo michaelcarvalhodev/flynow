@@ -434,10 +434,10 @@ foreach ($pagamentos as $p) {
                                 <?= formatMoney($p['salario_base']) ?>
                             <?php endif; ?>
                         </td>
-                        <td class="text-right">
-                            <?php if ($modoEdicao): ?>
-                                <input type="text" name="pagamentos[<?= $p['id'] ?>][base_comissao]"
-                                    value="<?= number_format($p['lucro_base_comissao'], 2, ',', '.') ?>"
+                            <td class="text-right">
+                                <?php if ($modoEdicao): ?>
+                                    <input type="text" name="pagamentos[<?= $p['id'] ?>][base_comissao]"
+                                        value="0,00"
                                     class="form-control input-money input-base text-right" style="width: 130px;"
                                     data-row="<?= $p['id'] ?>" data-field="base_comissao">
                             <?php else: ?>
@@ -447,7 +447,7 @@ foreach ($pagamentos as $p) {
                         <td class="text-right">
                             <?php if ($modoEdicao): ?>
                                 <input type="text" name="pagamentos[<?= $p['id'] ?>][percentual]"
-                                    value="<?= number_format($p['percentual_comissao'], 2, ',', '.') ?>"
+                                    value="<?= number_format($p['percentual_aplicado'] ?? 0, 2, ',', '.') ?>"
                                     class="form-control input-percent text-right" style="width: 80px;"
                                     data-row="<?= $p['id'] ?>" data-field="percentual">
                             <?php else: ?>
@@ -470,11 +470,11 @@ foreach ($pagamentos as $p) {
                         <td class="text-right" style="color: var(--accent-warning);">
                             <?php if ($modoEdicao): ?>
                                 <input type="text" name="pagamentos[<?= $p['id'] ?>][bonus]"
-                                    value="<?= number_format($p['valor_bonus'], 2, ',', '.') ?>"
+                                    value="<?= number_format($p['bonus'] ?? 0, 2, ',', '.') ?>"
                                     class="form-control input-money text-right" style="width: 120px;"
                                     data-row="<?= $p['id'] ?>" data-field="bonus">
                             <?php else: ?>
-                                <?= $p['valor_bonus'] > 0 ? formatMoney($p['valor_bonus']) : '-' ?>
+                                <?= ($p['bonus'] ?? 0) > 0 ? formatMoney($p['bonus']) : '-' ?>
                                 <?php if ($p['motivo_bonus']): ?>
                                     <br><small class="text-muted">
                                         <?= htmlspecialchars($p['motivo_bonus']) ?>
@@ -484,7 +484,7 @@ foreach ($pagamentos as $p) {
                         </td>
                         <td class="text-right">
                             <strong class="total-row" data-row="<?= $p['id'] ?>">
-                                <?= formatMoney($p['total_pagar']) ?>
+                                <?= formatMoney($p['valor_liquido'] ?? 0) ?>
                             </strong>
                         </td>
                     </tr>
