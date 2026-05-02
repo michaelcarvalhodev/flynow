@@ -12,7 +12,7 @@ $pdo = getDB();
 // Busca fechamentos para export
 $fechamentos = $pdo->query("
     SELECT f.*, 
-           (SELECT COUNT(*) FROM pagamentos WHERE fechamento_id = f.id) as total_colaboradores
+           (SELECT COUNT(*) FROM comissoes WHERE fechamento_id = f.id) as total_colaboradores
     FROM fechamentos f
     WHERE f.status IN ('calculado', 'aprovado', 'pago')
     ORDER BY f.ano DESC, f.mes DESC
@@ -30,15 +30,15 @@ if (isset($_GET['export'])) {
         $fechamento = $stmt->fetch();
 
         $stmt = $pdo->prepare("
-            SELECT p.*, c.nome, c.cpf, cg.nome as cargo_nome
-            FROM pagamentos p
-            JOIN colaboradores c ON p.colaborador_id = c.id
+            SELECT cm.*, c.nome, c.cpf, c.salario_base, cg.nome as cargo_nome
+            FROM comissoes cm
+            JOIN colaboradores c ON cm.colaborador_id = c.id
             JOIN cargos cg ON c.cargo_id = cg.id
-            WHERE p.fechamento_id = ?
+            WHERE cm.fechamento_id = ?
             ORDER BY c.nome
         ");
         $stmt->execute([$fechamentoId]);
-        $pagamentos = $stmt->fetchAll();
+        $comissoes = $stmt->fetchAll();
 
         if ($format === 'csv') {
             // Exporta CSV
@@ -49,19 +49,19 @@ if (isset($_GET['export'])) {
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM UTF-8
 
             // Cabeçalho
-            fputcsv($output, ['Nome', 'CPF', 'Cargo', 'Salário Base', 'Base Comissão', '% Comissão', 'Valor Comissão', 'Bônus', 'Total'], ';');
+            fputcsv($output, ['Nome', 'CPF', 'Cargo', 'Salário Base', '% Comissão', 'Valor Comissão', 'Bônus', 'Deduções', 'Total Líquido'], ';');
 
-            foreach ($pagamentos as $p) {
+            foreach ($comissoes as $cm) {
                 fputcsv($output, [
-                    $p['nome'],
-                    $p['cpf'] ?? '',
-                    $p['cargo_nome'],
-                    number_format($p['salario_base'], 2, ',', '.'),
-                    number_format($p['lucro_base_comissao'], 2, ',', '.'),
-                    number_format($p['percentual_comissao'], 2, ',', '.') . '%',
-                    number_format($p['valor_comissao'], 2, ',', '.'),
-                    number_format($p['valor_bonus'], 2, ',', '.'),
-                    number_format($p['total_pagar'], 2, ',', '.')
+                    $cm['nome'],
+                    $cm['cpf'] ?? '',
+                    $cm['cargo_nome'],
+                    number_format($cm['salario_base'], 2, ',', '.'),
+                    number_format($cm['percentual_aplicado'], 2, ',', '.') . '%',
+                    number_format($cm['valor_comissao'], 2, ',', '.'),
+                    number_format($cm['bonus'], 2, ',', '.'),
+                    number_format($cm['deducoes'], 2, ',', '.'),
+                    number_format($cm['valor_liquido'], 2, ',', '.')
                 ], ';');
             }
 
@@ -73,9 +73,9 @@ if (isset($_GET['export'])) {
                 '',
                 number_format($fechamento['total_salarios'], 2, ',', '.'),
                 '',
-                '',
                 number_format($fechamento['total_comissoes'], 2, ',', '.'),
                 number_format($fechamento['total_bonus'], 2, ',', '.'),
+                '',
                 number_format($fechamento['total_folha'], 2, ',', '.')
             ], ';');
 
@@ -119,10 +119,8 @@ if (isset($_GET['export'])) {
                         <option value="">Selecione...</option>
                         <?php foreach ($fechamentos as $f): ?>
                             <option value="<?= $f['id'] ?>">
-                                <?= getMesNome($f['mes']) ?>/
-                                <?= $f['ano'] ?> -
-                                <?= ucfirst($f['status']) ?> (
-                                <?= $f['total_colaboradores'] ?> colaboradores)
+                                <?= getMesNome($f['mes']) ?>/<?= $f['ano'] ?> -
+                                <?= ucfirst($f['status']) ?> (<?= $f['total_colaboradores'] ?> colaboradores)
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -167,10 +165,8 @@ if (isset($_GET['export'])) {
                         <?php
                         $anos = array_unique(array_column($fechamentos, 'ano'));
                         foreach ($anos as $a):
-                            ?>
-                            <option value="<?= $a ?>">
-                                <?= $a ?>
-                            </option>
+                        ?>
+                            <option value="<?= $a ?>"><?= $a ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -213,19 +209,10 @@ if (isset($_GET['export'])) {
                 <tbody>
                     <?php foreach ($fechamentos as $f): ?>
                         <tr>
-                            <td><strong>
-                                    <?= getMesNome($f['mes']) ?>/
-                                    <?= $f['ano'] ?>
-                                </strong></td>
-                            <td class="text-right">
-                                <?= formatMoney($f['lucro_liquido_total']) ?>
-                            </td>
-                            <td class="text-right">
-                                <?= formatMoney($f['total_folha']) ?>
-                            </td>
-                            <td>
-                                <?= $f['total_colaboradores'] ?>
-                            </td>
+                            <td><strong><?= getMesNome($f['mes']) ?>/<?= $f['ano'] ?></strong></td>
+                            <td class="text-right"><?= formatMoney($f['lucro_liquido_total']) ?></td>
+                            <td class="text-right"><?= formatMoney($f['total_folha']) ?></td>
+                            <td><?= $f['total_colaboradores'] ?></td>
                             <td>
                                 <?php
                                 $statusClass = match ($f['status']) {
