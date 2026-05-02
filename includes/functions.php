@@ -285,15 +285,27 @@ function calcularFechamento($fechamentoId)
     ");
 
     foreach ($pagamentos as $pag) {
-        $stmtCom->execute([
-            $fechamentoId,
-            $pag['colaborador_id'],
-            $pag['valor_comissao'],
-            $pag['percentual_comissao'],
-            $pag['valor_bonus'],
-            0, // deducoes (por enquanto zero)
-            $pag['total_pagar']
-        ]);
+        // DEBUG: Mostra valores antes de inserir
+        error_log("DEBUG COMISSAO - Nome: {$pag['nome']}");
+        error_log("  valor_comissao: {$pag['valor_comissao']}");
+        error_log("  percentual_comissao: {$pag['percentual_comissao']}");
+        error_log("  valor_bonus: {$pag['valor_bonus']}");
+        error_log("  total_pagar: {$pag['total_pagar']}");
+
+        try {
+            $stmtCom->execute([
+                $fechamentoId,
+                $pag['colaborador_id'],
+                $pag['valor_comissao'],
+                $pag['percentual_comissao'],
+                $pag['valor_bonus'],
+                0, // deducoes
+                $pag['total_pagar']
+            ]);
+        } catch (PDOException $e) {
+            error_log("ERRO AO INSERIR COMISSAO: " . $e->getMessage());
+            throw $e; // Re-lança erro
+        }
     }
 
 
