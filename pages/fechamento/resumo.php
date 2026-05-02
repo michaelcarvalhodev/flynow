@@ -53,7 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$_SESSION['user_id'], $fechamentoId]);
         logAction('aprovar', 'fechamentos', $fechamentoId);
         $success = 'Fechamento aprovado com sucesso!';
-        $fechamento['status'] = 'aprovado';
+
+        // Recarrega o fechamento
+        $stmt = $pdo->prepare("SELECT * FROM fechamentos WHERE id = ?");
+        $stmt->execute([$fechamentoId]);
+        $fechamento = $stmt->fetch();
     } elseif ($action === 'pagar' && canApprovePayments()) {
         $stmt = $pdo->prepare("
             UPDATE fechamentos SET status = 'pago', data_pagamento = CURRENT_DATE
@@ -75,7 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$fechamentoId]);
         logAction('reabrir', 'fechamentos', $fechamentoId);
         $success = 'Fechamento reaberto para edição.';
-        $fechamento['status'] = 'calculado';
+
+        // Recarrega o fechamento
+        $stmt = $pdo->prepare("SELECT * FROM fechamentos WHERE id = ?");
+        $stmt->execute([$fechamentoId]);
+        $fechamento = $stmt->fetch();
     } elseif ($action === 'salvar_ajustes' && canApprovePayments()) {
         // Processa ajustes manuais de salário, base comissão, percentual, comissão e bônus
         $pagamentosAjustes = $_POST['pagamentos'] ?? [];
