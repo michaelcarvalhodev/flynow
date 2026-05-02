@@ -79,15 +79,15 @@ function checkLoginRateLimit($email)
     $windowMinutes = 15;
     $maxAttempts = 5;
 
-    // Limpa tentativas antigas
-    $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)")
+    // Limpa tentativas antigas (PostgreSQL syntax)
+    $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL '1 minute' * ?")
         ->execute([$windowMinutes]);
 
-    // Conta tentativas recentes (por IP ou email)
+    // Conta tentativas recentes (por IP ou email) (PostgreSQL syntax)
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as attempts FROM login_attempts
         WHERE (ip_address = ? OR email = ?)
-        AND attempted_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+        AND attempted_at > NOW() - INTERVAL '1 minute' * ?
     ");
     $stmt->execute([$ip, $email, $windowMinutes]);
     $result = $stmt->fetch();
@@ -164,8 +164,8 @@ function login($email, $senha)
     $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? '';
     $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
-    // Atualiza último login
-    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?");
+    // Atualiza último login (PostgreSQL syntax)
+    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_login = CURRENT_TIMESTAMP WHERE id = ?");
     $stmt->execute([$user['id']]);
 
     logAction('login', 'usuarios', $user['id']);
