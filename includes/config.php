@@ -76,12 +76,12 @@ function getDB()
 
 function formatMoney($value)
 {
-    return 'R$ ' . number_format($value, 2, ',', '.');
+    return 'R$ ' . number_format($value ?? 0, 2, ',', '.');
 }
 
 function formatPercent($value)
 {
-    return number_format($value, 1, ',', '.') . '%';
+    return number_format($value ?? 0, 1, ',', '.') . '%';
 }
 
 function parseMoney($value)
