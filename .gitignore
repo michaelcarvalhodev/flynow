@@ -1,0 +1,23 @@
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+gerar-senha.php
+setup_complete
+
+# Composer
+/vendor/
+composer.lock
