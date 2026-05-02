@@ -127,17 +127,17 @@ function calcularFechamento($fechamentoId)
 
     // Busca lucros por copy
     $stmt = $pdo->prepare("
-        SELECT fcl.*, c.nome, c.cargo_id, c.salario_base, c.percentual_comissao as percentual_customizado
-        FROM fechamento_colaborador_lucro fcl
-        JOIN colaboradores c ON fcl.colaborador_id = c.id
-        WHERE fcl.fechamento_id = ?
+        SELECT lc.*, c.nome, c.cargo_id, c.salario_base, c.percentual_comissao as percentual_customizado
+        FROM lucro_colaborador lc
+        JOIN colaboradores c ON lc.colaborador_id = c.id
+        WHERE lc.fechamento_id = ?
     ");
     $stmt->execute([$fechamentoId]);
     $lucrosPorCopy = $stmt->fetchAll();
 
     $lucroLiqCopysTotal = 0;
     foreach ($lucrosPorCopy as $lc) {
-        $lucroLiqCopysTotal += calcularLucroLiquido($lc['lucro_bruto_gerado'], $deducoes['imposto'], $deducoes['reembolso'], $deducoes['outras']);
+        $lucroLiqCopysTotal += calcularLucroLiquido($lc['lucro_gerado'], $deducoes['imposto'], $deducoes['reembolso'], $deducoes['outras']);
     }
 
     // Busca todos os colaboradores ativos
@@ -205,7 +205,7 @@ function calcularFechamento($fechamentoId)
                 // Copy - busca lucro individual
                 foreach ($lucrosPorCopy as $lc) {
                     if ($lc['colaborador_id'] == $colab['id']) {
-                        $lucroBase = calcularLucroLiquido($lc['lucro_bruto_gerado'], $deducoes['imposto'], $deducoes['reembolso'], $deducoes['outras']);
+                        $lucroBase = calcularLucroLiquido($lc['lucro_gerado'], $deducoes['imposto'], $deducoes['reembolso'], $deducoes['outras']);
                         break;
                     }
                 }
@@ -275,28 +275,27 @@ function calcularFechamento($fechamentoId)
         $fechamentoId
     ]);
 
-    // Remove pagamentos antigos e insere novos
-    $pdo->prepare("DELETE FROM pagamentos WHERE fechamento_id = ?")->execute([$fechamentoId]);
+    // Remove comissões antigas e insere novas
+    $pdo->prepare("DELETE FROM comissoes WHERE fechamento_id = ?")->execute([$fechamentoId]);
 
-    $stmtPag = $pdo->prepare("
-        INSERT INTO pagamentos (fechamento_id, colaborador_id, salario_base, lucro_base_comissao, 
-                                percentual_comissao, valor_comissao, valor_bonus, motivo_bonus, total_pagar)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    $stmtCom = $pdo->prepare("
+        INSERT INTO comissoes (fechamento_id, colaborador_id, valor_comissao,
+                               percentual_aplicado, bonus, deducoes, valor_liquido)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
 
     foreach ($pagamentos as $pag) {
-        $stmtPag->execute([
+        $stmtCom->execute([
             $fechamentoId,
             $pag['colaborador_id'],
-            $pag['salario_base'],
-            $pag['lucro_base_comissao'],
-            $pag['percentual_comissao'],
             $pag['valor_comissao'],
+            $pag['percentual_comissao'],
             $pag['valor_bonus'],
-            $pag['motivo_bonus'],
+            0, // deducoes (por enquanto zero)
             $pag['total_pagar']
         ]);
     }
+
 
     logAction('calcular', 'fechamentos', $fechamentoId);
 
