@@ -405,7 +405,6 @@ foreach ($pagamentos as $p) {
                     <th>Cargo</th>
                     <th>Setor</th>
                     <th class="text-right">Salário</th>
-                    <th class="text-right">Base Comissão</th>
                     <th class="text-right">% Com.</th>
                     <th class="text-right">Comissão</th>
                     <th class="text-right">Bônus</th>
@@ -415,33 +414,17 @@ foreach ($pagamentos as $p) {
             <tbody>
                 <?php foreach ($pagamentos as $p): ?>
                     <tr>
-                        <td><strong>
-                                <?= htmlspecialchars($p['nome']) ?>
-                            </strong></td>
-                        <td>
-                            <?= htmlspecialchars($p['cargo_nome']) ?>
-                        </td>
-                        <td><span class="badge badge-info">
-                                <?= ucfirst($p['setor']) ?>
-                            </span></td>
+                        <td><strong><?= htmlspecialchars($p['nome']) ?></strong></td>
+                        <td><?= htmlspecialchars($p['cargo_nome']) ?></td>
+                        <td><span class="badge badge-info"><?= ucfirst($p['setor']) ?></span></td>
                         <td class="text-right">
                             <?php if ($modoEdicao): ?>
                                 <input type="text" name="pagamentos[<?= $p['id'] ?>][salario]"
-                                    value="<?= number_format($p['salario_base'], 2, ',', '.') ?>"
+                                    value="<?= number_format($p['salario_base'] ?? 0, 2, ',', '.') ?>"
                                     class="form-control input-money text-right" style="width: 120px;"
                                     data-row="<?= $p['id'] ?>" data-field="salario">
                             <?php else: ?>
-                                <?= formatMoney($p['salario_base']) ?>
-                            <?php endif; ?>
-                        </td>
-                            <td class="text-right">
-                                <?php if ($modoEdicao): ?>
-                                    <input type="text" name="pagamentos[<?= $p['id'] ?>][base_comissao]"
-                                        value="0,00"
-                                    class="form-control input-money input-base text-right" style="width: 130px;"
-                                    data-row="<?= $p['id'] ?>" data-field="base_comissao">
-                            <?php else: ?>
-                                <?= $p['lucro_base_comissao'] > 0 ? formatMoney($p['lucro_base_comissao']) : '-' ?>
+                                <?= formatMoney($p['salario_base'] ?? 0) ?>
                             <?php endif; ?>
                         </td>
                         <td class="text-right">
@@ -451,20 +434,20 @@ foreach ($pagamentos as $p) {
                                     class="form-control input-percent text-right" style="width: 80px;"
                                     data-row="<?= $p['id'] ?>" data-field="percentual">
                             <?php else: ?>
-                                <?= $p['percentual_comissao'] > 0 ? formatPercent($p['percentual_comissao']) : '-' ?>
+                                <?= ($p['percentual_aplicado'] ?? 0) > 0 ? formatPercent($p['percentual_aplicado']) : '-' ?>
                             <?php endif; ?>
                         </td>
                         <td class="text-right" style="color: var(--accent-primary);">
                             <?php if ($modoEdicao): ?>
                                 <span class="comissao-calculada" data-row="<?= $p['id'] ?>">
-                                    <?= formatMoney($p['valor_comissao']) ?>
+                                    <?= formatMoney($p['valor_comissao'] ?? 0) ?>
                                 </span>
                                 <input type="hidden" name="pagamentos[<?= $p['id'] ?>][comissao]"
-                                    value="<?= number_format($p['valor_comissao'], 2, ',', '.') ?>"
+                                    value="<?= number_format($p['valor_comissao'] ?? 0, 2, ',', '.') ?>"
                                     class="input-comissao-hidden"
                                     data-row="<?= $p['id'] ?>">
                             <?php else: ?>
-                                <?= $p['valor_comissao'] > 0 ? formatMoney($p['valor_comissao']) : '-' ?>
+                                <?= ($p['valor_comissao'] ?? 0) > 0 ? formatMoney($p['valor_comissao']) : '-' ?>
                             <?php endif; ?>
                         </td>
                         <td class="text-right" style="color: var(--accent-warning);">
@@ -475,11 +458,6 @@ foreach ($pagamentos as $p) {
                                     data-row="<?= $p['id'] ?>" data-field="bonus">
                             <?php else: ?>
                                 <?= ($p['bonus'] ?? 0) > 0 ? formatMoney($p['bonus']) : '-' ?>
-                                <?php if ($p['motivo_bonus']): ?>
-                                    <br><small class="text-muted">
-                                        <?= htmlspecialchars($p['motivo_bonus']) ?>
-                                    </small>
-                                <?php endif; ?>
                             <?php endif; ?>
                         </td>
                         <td class="text-right">
@@ -497,7 +475,6 @@ foreach ($pagamentos as $p) {
                             <?= formatMoney($fechamento['total_salarios']) ?>
                         </strong></td>
                     <td></td>
-                    <td></td>
                     <td class="text-right"><strong id="total-comissoes">
                             <?= formatMoney($fechamento['total_comissoes']) ?>
                         </strong></td>
@@ -512,6 +489,7 @@ foreach ($pagamentos as $p) {
         </table>
     </div>
     <?php if ($modoEdicao): ?>
+
         <div class="card-body" style="border-top: 1px solid var(--border-color);">
             <div class="flex justify-between items-center">
                 <p class="text-muted" style="margin: 0;">
