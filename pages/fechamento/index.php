@@ -51,7 +51,7 @@ if (!$fechamento) {
 $copys = getCopysAtivos();
 
 // Busca lucros já cadastrados por copy
-$stmt = $pdo->prepare("SELECT colaborador_id, lucro_bruto_gerado FROM fechamento_colaborador_lucro WHERE fechamento_id = ?");
+$stmt = $pdo->prepare("SELECT colaborador_id, lucro_gerado FROM lucro_colaborador WHERE fechamento_id = ?");
 $stmt->execute([$fechamentoId]);
 $lucrosPorCopy = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
@@ -110,11 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         // Salva lucros por copy
-        $pdo->prepare("DELETE FROM fechamento_colaborador_lucro WHERE fechamento_id = ?")->execute([$fechamentoId]);
+        $pdo->prepare("DELETE FROM lucro_colaborador WHERE fechamento_id = ?")->execute([$fechamentoId]);
 
         if (!empty($_POST['lucro_copy'])) {
             $stmtCopy = $pdo->prepare("
-                INSERT INTO fechamento_colaborador_lucro (fechamento_id, colaborador_id, lucro_bruto_gerado)
+                INSERT INTO lucro_colaborador (fechamento_id, colaborador_id, lucro_gerado)
                 VALUES (?, ?, ?)
             ");
             foreach ($_POST['lucro_copy'] as $colabId => $valor) {
@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$fechamentoId]);
             $fechamento = $stmt->fetch();
 
-            $stmt = $pdo->prepare("SELECT colaborador_id, lucro_bruto_gerado FROM fechamento_colaborador_lucro WHERE fechamento_id = ?");
+            $stmt = $pdo->prepare("SELECT colaborador_id, lucro_gerado FROM lucro_colaborador WHERE fechamento_id = ?");
             $stmt->execute([$fechamentoId]);
             $lucrosPorCopy = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
