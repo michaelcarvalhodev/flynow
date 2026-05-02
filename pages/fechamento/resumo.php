@@ -62,7 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$fechamentoId]);
         logAction('pagar', 'fechamentos', $fechamentoId);
         $success = 'Fechamento marcado como pago!';
-        $fechamento['status'] = 'pago';
+
+        // Recarrega o fechamento
+        $stmt = $pdo->prepare("SELECT * FROM fechamentos WHERE id = ?");
+        $stmt->execute([$fechamentoId]);
+    $fechamento = $stmt->fetch();
     } elseif ($action === 'reabrir' && canApprovePayments()) {
         $stmt = $pdo->prepare("
             UPDATE fechamentos SET status = 'calculado', data_aprovacao = NULL, aprovado_por = NULL, data_pagamento = NULL
