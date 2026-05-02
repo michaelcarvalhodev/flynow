@@ -260,7 +260,7 @@ function calcularFechamento($fechamentoId)
             percentual_folha_lucro = ?,
             meta_escalonamento_atingida = ?,
             status = 'calculado',
-            updated_at = NOW()
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
     ");
     $stmt->execute([
@@ -271,7 +271,7 @@ function calcularFechamento($fechamentoId)
         $totalBonus,
         $totalFolha,
         $percentualFolhaLucro,
-        $escalonamento['atingiu'],
+        $escalonamento['atingiu'] ? 'true' : 'false',  // <-- CONVERTE PARA BOOLEAN STRING
         $fechamentoId
     ]);
 
