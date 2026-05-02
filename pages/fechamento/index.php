@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (PDOException $e) {
         error_log("Erro ao salvar fechamento: " . $e->getMessage());
-        $errors[] = 'Erro ao salvar. Tente novamente.';
+        $errors[] = 'Erro ao salvar: ' . $e->getMessage(); // <-- MOSTRA ERRO REAL
     }
     }
 }
